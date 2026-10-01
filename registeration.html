@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>food| Register</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<script src="script.js"></script>
+<body>
+    <!-- Dark Container Box -->
+    <div class="main-card">
+        <!-- Top Left Logo -->
+        <div class="logo">
+            CanteenFlow<span>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- Left Fast Food Visuals -->
+            <div class="food-display">
+                <img src="https://images.unsplash.com/photo-1561758033-d89a9ad46330?auto=format&fit=crop&w=800&q=80" alt="Burger Fries Fast Food" class="hero-food-img">
+            </div>
+
+            <!-- Right Dark Register Form -->
+            <div class="form-card">
+                <h2 class="form-title">Create Account</h2>
+
+                <form id="registerForm" action="#" method="post">
+                    <!-- Full Name Input -->
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" name="fullName" class="form-input" placeholder="John Doe" required>
+                    </div>
+
+                    <!-- Email Input -->
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="username@gmail.com" required>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="password" name="password" class="form-input" placeholder="Create Password" required>
+                            <i class="fa-regular fa-eye eye-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- Confirm Password Input -->
+                    <div class="form-group mb-4">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="Confirm Password" required>
+                            <i class="fa-regular fa-eye eye-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- Orange Submit Button -->
+                    <button type="submit" class="submit-btn">Register</button>
+                </form>
+
+                <!-- Social Sign Up Divider -->
+                <div class="divider">or continue with</div>
+
+                <!-- Social Login Buttons -->
+                <div class="social-buttons">
+                    <button class="social-btn" type="button"><i class="fa-brands fa-google" style="color: #ea4335;"></i></button>
+                    <button class="social-btn" type="button"><i class="fa-brands fa-github" style="color: #000000;"></i></button>
+                    <button class="social-btn" type="button"><i class="fa-brands fa-facebook-f" style="color: #1877f2;"></i></button>
+                </div>
+
+                <!-- Footer Link -->
+                <p class="register-text">
+                    Already have an account? <a href="login.html">Sign in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

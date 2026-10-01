@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Menu - CanteenFlow</title>
+    <style>
+        body { font-family: sans-serif; background: #f8f9fa; margin: 0; padding: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-bottom: 1px solid #ddd; margin-bottom: 20px; }
+        nav a { margin-left: 15px; color: #007bff; text-decoration: none; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .item-card { background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .price { font-weight: bold; color: #28a745; margin: 10px 0; }
+        button { background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; width: 100%; }
+        .flash { background: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h2>Canteen Menu</h2>
+        <nav>
+            <a href="/cart">Cart 🛒</a>
+            <a href="/orders">My Orders</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="flash">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% for cat in categories %}
+        <h3>{{ cat.name }}</h3>
+        <div class="grid">
+            {% for item in items %}
+                {% if item.category_id == cat.category_id %}
+                    <div class="item-card">
+                        <h4>{{ item.name }}</h4>
+                        <p>{{ item.description }}</p>
+                        <div class="price">₹{{ "%.2f"|format(item.price) }}</div>
+                        <form action="/cart/add" method="POST">
+                            <input type="hidden" name="item_id" value="{{ item.item_id }}">
+                            <button type="submit">Add to Cart</button>
+                        </form>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endfor %}
+</body>
+</html>

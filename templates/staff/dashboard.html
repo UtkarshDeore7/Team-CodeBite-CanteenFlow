@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="5">
+    <title>Staff Dashboard - CanteenFlow</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f6f9; padding: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 8px; margin-bottom: 20px; }
+        .board { display: flex; gap: 20px; }
+        .col { flex: 1; background: #e9ecef; padding: 15px; border-radius: 8px; min-height: 400px; }
+        .card { background: white; padding: 15px; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        button { background: #28a745; color: white; border: none; padding: 8px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .flash { background: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h2>Kitchen Order Board</h2>
+        <div>Logged in as Staff | <a href="/logout">Logout</a></div>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="flash">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="board">
+        <div class="col">
+            <h3>Active Kitchen Orders</h3>
+            {% for order in orders %}
+                <div class="card">
+                    <h4>Token #{{ order.token_number }} ({{ order.full_name }})</h4>
+                    <p>Status: <strong>{{ order.status }}</strong></p>
+                    <p>Total: ₹{{ "%.2f"|format(order.total_amount) }}</p>
+                    <form action="/staff/order/{{ order.order_id }}/advance" method="POST">
+                        <button type="submit">Advance Order Status</button>
+                    </form>
+                </div>
+            {% else %}
+                <p>No active kitchen orders.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

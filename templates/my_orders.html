@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Orders - CanteenFlow</title>
+    <style>
+        body { font-family: sans-serif; background: #f8f9fa; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; }
+        .order-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        a { color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/menu">← Back to Menu</a>
+        <h2>My Past Orders</h2>
+        {% for o in orders %}
+            <div class="order-card">
+                <div>
+                    <strong>Token #{{ o.token_number }}</strong> - {{ o.placed_at }}<br>
+                    Status: <em>{{ o.status }}</em>
+                </div>
+                <div>
+                    <strong>₹{{ "%.2f"|format(o.total_amount) }}</strong> | 
+                    <a href="/order/{{ o.order_id }}">View Ticket</a>
+                </div>
+            </div>
+        {% else %}
+            <p>No orders placed yet.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

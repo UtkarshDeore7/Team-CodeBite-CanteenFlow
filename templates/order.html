@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order #{{ order.token_number }} - CanteenFlow</title>
+    <style>
+        body { font-family: sans-serif; background: #f8f9fa; padding: 20px; text-align: center; }
+        .ticket { background: white; max-width: 400px; margin: 40px auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .token { font-size: 48px; font-weight: bold; color: #28a745; margin: 10px 0; }
+        .status { font-weight: bold; padding: 6px 12px; background: #e2e3e5; display: inline-block; border-radius: 20px; }
+        ul { text-align: left; margin-top: 20px; padding: 0; list-style: none; }
+        li { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        a { color: #007bff; text-decoration: none; display: inline-block; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div>Token Number</div>
+        <div class="token">#{{ order.token_number }}</div>
+        <div class="status">Status: {{ order.status }}</div>
+        
+        <ul>
+            {% for item in items %}
+                <li><span>{{ item.quantity }}x {{ item.name }}</span> <span>₹{{ "%.2f"|format(item.unit_price) }}</span></li>
+            {% endfor %}
+        </ul>
+        <h3>Total: ₹{{ "%.2f"|format(order.total_amount) }}</h3>
+        <a href="/orders">View All Orders</a> | <a href="/menu">Back to Menu</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Cart - CanteenFlow</title>
+    <style>
+        body { font-family: sans-serif; background: #f8f9fa; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }
+        .total { font-size: 18px; font-weight: bold; text-align: right; margin-bottom: 20px; }
+        button { background: #28a745; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; border-radius: 4px; cursor: pointer; }
+        a { color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/menu">← Back to Menu</a>
+        <h2>Your Cart</h2>
+        {% if items %}
+            <table>
+                <tr><th>Item</th><th>Qty</th><th>Price</th></tr>
+                {% for row in items %}
+                    <tr>
+                        <td>{{ row.item.name }}</td>
+                        <td>{{ row.qty }}</td>
+                        <td>₹{{ "%.2f"|format(row.line_total) }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+            <div class="total">Total: ₹{{ "%.2f"|format(total) }}</div>
+            <form action="/cart" method="POST">
+                <button type="submit">Place Order</button>
+            </form>
+        {% else %}
+            <p>Your cart is empty. <a href="/menu">Browse Menu</a></p>
+        {% endif %}
+    </div>
+</body>
+</html>
