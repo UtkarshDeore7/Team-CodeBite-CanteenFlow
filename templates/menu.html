@@ -2,53 +2,197 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Menu - CanteenFlow</title>
-    <style>
-        body { font-family: sans-serif; background: #f8f9fa; margin: 0; padding: 20px; }
-        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-bottom: 1px solid #ddd; margin-bottom: 20px; }
-        nav a { margin-left: 15px; color: #007bff; text-decoration: none; font-weight: bold; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
-        .item-card { background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .price { font-weight: bold; color: #28a745; margin: 10px 0; }
-        button { background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; width: 100%; }
-        .flash { background: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border-radius: 4px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CanteenFlow - 100% Pure Veg Menu</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </head>
 <body>
     <header>
-        <h2>Canteen Menu</h2>
+        <a href="/menu" class="brand">⚡ CanteenFlow</a>
         <nav>
-            <a href="/cart">Cart 🛒</a>
+            {% if g.user %}
+                <div class="user-pill">
+                    <div class="user-avatar">{{ g.user.full_name[0] }}</div>
+                    <div class="user-info">
+                        <span class="user-greeting">
+                            <span id="time-greeting">Hello</span>, {{ g.user.full_name.split()[0] }}! 👋
+                        </span>
+                        <span class="user-role-badge">
+                            {% if g.user.role == 'STAFF' %}🍳 Kitchen Admin{% else %}🌱 Pure Veg Foodie{% endif %}
+                        </span>
+                    </div>
+                </div>
+            {% endif %}
+
+            <a href="/menu" class="active">Menu</a>
             <a href="/orders">My Orders</a>
-            <a href="/logout">Logout</a>
+            <a href="/cart" class="nav-cart-btn">Cart 🛒</a>
+            <button class="pill-btn" id="theme-btn" onclick="toggleDarkMode()" style="padding: 6px 14px; font-size: 12px;">🌙 Dark</button>
+            <a href="/logout" style="color: #ef4444;">Logout</a>
         </nav>
     </header>
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-                <div class="flash">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <div id="toast-container"></div>
 
-    {% for cat in categories %}
-        <h3>{{ cat.name }}</h3>
-        <div class="grid">
-            {% for item in items %}
-                {% if item.category_id == cat.category_id %}
-                    <div class="item-card">
-                        <h4>{{ item.name }}</h4>
-                        <p>{{ item.description }}</p>
-                        <div class="price">₹{{ "%.2f"|format(item.price) }}</div>
-                        <form action="/cart/add" method="POST">
-                            <input type="hidden" name="item_id" value="{{ item.item_id }}">
-                            <button type="submit">Add to Cart</button>
-                        </form>
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="background: #d1fae5; color: #065f46; padding: 14px 20px; border-radius: 14px; margin-bottom: 24px; font-weight: 800; border: 1px solid #6ee7b7;">
+                        {{ message }}
                     </div>
-                {% endif %}
-            {% endfor %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Hero Offer Deck -->
+        <div class="offers-row">
+            <div class="banner-card">
+                <div>
+                    <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">🌱 100% Pure Veg Canteen</span>
+                    <h3 style="font-size: 20px; font-weight: 900; margin-top: 2px;">FLAT 10% OFF</h3>
+                    <p style="font-size: 12.5px; opacity: 0.9; margin-top: 2px;">Use promo code <strong>CODEBITE10</strong></p>
+                </div>
+                <span class="banner-code">CODEBITE10</span>
+            </div>
+            
+            <div class="banner-card" style="background: linear-gradient(135deg, #7c3aed, #db2777); cursor: pointer;" onclick="openRoulette()">
+                <div>
+                    <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Can't Decide What to Eat?</span>
+                    <h3 style="font-size: 20px; font-weight: 900; margin-top: 2px;">🎰 FOOD ROULETTE</h3>
+                    <p style="font-size: 12.5px; opacity: 0.9; margin-top: 2px;">Spin & let CanteenFlow pick for you!</p>
+                </div>
+                <span class="banner-code" style="background: white; color: #7c3aed; border: none;">SPIN 🎲</span>
+            </div>
         </div>
-    {% endfor %}
+
+        <!-- Filter Bar -->
+        <div class="controls-wrapper">
+            <div class="search-field">
+                <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); opacity: 0.6;">🔍</span>
+                <input type="text" id="search-input" placeholder="Search misal pav, veg biryani, paneer, gulab jamun...">
+            </div>
+            
+            <div class="pill-list">
+                <button class="pill-btn active" onclick="filterCategory('ALL', this)">✨ All Items</button>
+                {% for cat in categories %}
+                    <button class="pill-btn" onclick="filterCategory('{{ cat.name }}', this)">
+                        {% if cat.name == 'Snacks' %}🥪
+                        {% elif cat.name == 'Main Course' %}🍲
+                        {% elif cat.name == 'Beverages' %}🧋
+                        {% elif cat.name == 'Desserts' %}🍨
+                        {% else %}🍛{% endif %}
+                        {{ cat.name }}
+                    </button>
+                {% endfor %}
+            </div>
+
+            <div style="background: {{ rush_info.bg if rush_info else '#ecfdf5' }}; color: {{ rush_info.color if rush_info else '#059669' }}; border: 1.5px solid {{ rush_info.color if rush_info else '#059669' }}; padding: 8px 18px; border-radius: 30px; font-size: 12.5px; font-weight: 800;">
+                {{ rush_info.label if rush_info else '🟢 Low Rush (~5 min wait)' }}
+            </div>
+        </div>
+
+        <!-- Food List Grid -->
+        {% for cat in categories %}
+            <div class="category-section" data-category="{{ cat.name }}">
+                <div class="category-title-bar">
+                    <span>
+                        {% if cat.name == 'Snacks' %}🥪
+                        {% elif cat.name == 'Main Course' %}🍲
+                        {% elif cat.name == 'Beverages' %}🧋
+                        {% elif cat.name == 'Desserts' %}🍨
+                        {% else %}🍛{% endif %}
+                    </span>
+                    {{ cat.name }}
+                </div>
+
+                <div class="food-grid">
+                    {% for item in items %}
+                        {% if item.category_id == cat.category_id %}
+                            <div class="food-card" data-item-id="{{ item.item_id }}" data-item-name="{{ item.name }}">
+                                <div class="food-details">
+                                    <div>
+                                        <div class="food-title">
+                                            <span class="veg-dot"></span>
+                                            {{ item.name }}
+                                            {% if loop.index % 2 == 0 %}
+                                                <span class="bestseller-tag">🔥 Bestseller</span>
+                                            {% endif %}
+                                        </div>
+                                        <div style="margin-bottom: 6px;">
+                                            <span class="rating-tag">★ 4.8</span>
+                                            <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; margin-left: 6px;">⏱ {{ item.prep_minutes }} mins</span>
+                                        </div>
+                                        <div class="food-price">₹{{ "%.2f"|format(item.price) }}</div>
+                                    </div>
+                                    <div class="food-desc">{{ item.description }}</div>
+                                </div>
+
+                                <!-- Image Container (Clicking opens Lightbox) -->
+                                <div class="img-container" onclick="openImageModal('{{ item.image_url }}', '{{ item.name|replace('\'', '\\\'') }}', '{{ item.price }}', '{{ item.description|replace('\'', '\\\'') }}', '{{ item.prep_minutes }}', '{{ item.item_id }}')">
+                                    <span class="img-zoom-cue">🔍 Zoom</span>
+                                    <img src="{{ item.image_url }}" alt="{{ item.name }}" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=600&q=80';">
+                                    <div class="btn-action-container" id="btn-container-{{ item.item_id }}" onclick="event.stopPropagation();"></div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <footer style="margin-top: 60px; padding: 24px 0; border-top: 1px solid var(--card-border); text-align: center; color: var(--text-muted); font-size: 13px; font-weight: 600;">
+            🌱 <strong>CanteenFlow (100% Pure Veg)</strong> • Smart Campus Ordering<br>
+            Powered by <strong>Team CodeBite</strong>
+        </footer>
+    </div>
+
+    <!-- Dish Image Lightbox Modal -->
+    <div id="image-modal" class="image-modal-overlay" onclick="closeImageModal()">
+        <div class="image-modal-card" onclick="event.stopPropagation()">
+            <div class="modal-img-wrapper">
+                <button class="modal-close-btn" onclick="closeImageModal()">✕</button>
+                <img id="modal-img" src="" alt="Dish Preview">
+            </div>
+            <div class="modal-content-body">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div>
+                        <span class="veg-dot"></span>
+                        <h3 id="modal-title" style="font-size: 20px; font-weight: 900; display: inline; vertical-align: middle;"></h3>
+                    </div>
+                    <span id="modal-price" style="font-size: 22px; font-weight: 900; color: var(--brand-primary);"></span>
+                </div>
+                
+                <div style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center;">
+                    <span class="rating-tag">★ 4.8 Rating</span>
+                    <span id="modal-prep" style="font-size: 12.5px; font-weight: 700; color: var(--text-muted);"></span>
+                </div>
+
+                <p id="modal-desc" style="color: var(--text-muted); font-size: 13px; line-height: 1.4; margin-bottom: 20px;"></p>
+
+                <button id="modal-add-btn" style="width: 100%; padding: 14px; background: var(--brand-gradient); color: white; border: none; font-size: 15px; font-weight: 900; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(255,82,0,0.3);">
+                    Add to Cart 🛒
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Sticky Cart Tray -->
+    <div class="floating-cart-bar" id="floating-cart-bar" style="display: {{ 'flex' if cart_data else 'none' }};">
+        <div>
+            <div style="font-size: 14px; font-weight: 900;" id="cart-summary-title">
+                🛒 {{ cart_data.values()|sum if cart_data else 0 }} Items Selected
+            </div>
+            <div style="font-size: 12px; opacity: 0.85;" id="cart-summary-subtitle">
+                Total: ₹<span id="cart-summary-total">0.00</span> • Skip physical counter lines
+            </div>
+        </div>
+        <a href="/cart">View Cart & Checkout →</a>
+    </div>
+
+    <script>
+        window.currentCart = {{ cart_data | tojson | safe if cart_data else '{}' }};
+    </script>
 </body>
 </html>

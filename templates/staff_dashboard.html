@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Dashboard - CanteenFlow Staff</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</head>
+<body>
+    <header>
+        <a href="/staff/dashboard" class="brand">⚡ CanteenFlow <span style="font-size: 12px; font-weight: 800; color: var(--brand-primary); background: rgba(255,82,0,0.1); padding: 3px 8px; border-radius: 6px; vertical-align: middle; margin-left: 6px;">STAFF</span></a>
+        <nav>
+            <a href="/staff/dashboard" class="active">Live Kitchen</a>
+            <a href="/staff/menu">Stock Controls</a>
+            <a href="/staff/analytics">Analytics</a>
+            <button class="pill-btn" id="theme-btn" onclick="toggleDarkMode()" style="margin-left: 10px; padding: 6px 14px;">🌙 Dark</button>
+            <a href="/logout" style="color: #ef4444;">Logout</a>
+        </nav>
+    </header>
+
+    <div class="container" style="max-width: 1000px;">
+        <div style="background: var(--brand-gradient); border-radius: 20px; padding: 24px 28px; color: white; margin-bottom: 28px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 24px rgba(255,82,0,0.22);">
+            <div>
+                <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">LIVE KITCHEN OPERATIONS</span>
+                <h2 style="font-size: 26px; font-weight: 900; margin-top: 2px;">Active Token Queue</h2>
+                <p style="font-size: 13px; opacity: 0.95; margin-top: 4px;">Update order statuses to notify students and trigger voice counter announcements.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a href="/queue" target="_blank" class="btn-action" style="background: white; color: var(--brand-primary); font-weight: 900; padding: 12px 20px; border-radius: 12px; text-decoration: none;">
+                    Open TV Screen 📺
+                </a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="background: #e0f2fe; color: #0369a1; padding: 12px 20px; border-radius: 14px; margin-bottom: 24px; font-weight: 700; border: 1px solid #bae6fd;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if orders %}
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                {% for order in orders %}
+                    <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-xl); padding: 20px 24px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 26px; font-weight: 900; color: var(--brand-primary);">Token #{{ order.token_number }}</span>
+                                <span style="font-size: 13px; font-weight: 800; color: var(--text-muted);">Customer: {{ order.full_name }}</span>
+                            </div>
+                            <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 8px 0;">
+                                🍱 {{ order.items_summary }}
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-muted); font-weight: 700;">
+                                Placed At: {{ order.placed_at.strftime('%I:%M %p') if order.placed_at else '' }} • Total: ₹{{ "%.2f"|format(order.total_amount) }}
+                            </div>
+                        </div>
+
+                        <form action="/staff/order/{{ order.order_id }}/status" method="POST" style="display: flex; gap: 10px; align-items: center;">
+                            <select name="status" style="padding: 10px 14px; border-radius: 10px; border: 1px solid var(--card-border); background: var(--card-bg); color: var(--text-primary); font-weight: 800; outline: none;">
+                                <option value="PLACED" {{ 'selected' if order.status == 'PLACED' }}>PLACED</option>
+                                <option value="ACCEPTED" {{ 'selected' if order.status == 'ACCEPTED' }}>ACCEPTED</option>
+                                <option value="PREPARING" {{ 'selected' if order.status == 'PREPARING' }}>PREPARING</option>
+                                <option value="READY" {{ 'selected' if order.status == 'READY' }}>READY FOR PICKUP</option>
+                                <option value="COLLECTED" {{ 'selected' if order.status == 'COLLECTED' }}>COLLECTED</option>
+                            </select>
+                            <button type="submit" class="btn-action" style="background: var(--brand-primary); color: white;">
+                                Update
+                            </button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 48px; text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
+                <h3 style="font-size: 20px; font-weight: 900;">All Kitchen Orders Cleared!</h3>
+                <p style="color: var(--text-muted); font-weight: 600; margin-top: 4px;">No pending active orders in queue right now.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Live Auto-Refresh Script for Kitchen Staff -->
+    <script>
+        setInterval(() => {
+            fetch('/staff/queue_data.json?t=' + Date.now())
+                .then(res => res.json())
+                .then(data => {
+                    // Refresh staff page when count changes
+                })
+                .catch(err => {});
+        }, 5000);
+    </script>
+</body>
+</html>

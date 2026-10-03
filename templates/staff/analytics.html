@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sales Analytics - MIT Mumbai Canteen</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <a href="/staff/dashboard" class="brand">⚡ MIT Mumbai Staff</a>
+        <nav>
+            <a href="/staff/dashboard">Kitchen Board</a>
+            <a href="/staff/analytics" class="active">Sales Analytics</a>
+            <a href="/staff/menu">Stock Control</a>
+            <a href="/logout" style="color: #ef4444;">Logout</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div>
+                <h2 style="font-size: 26px; font-weight: 900;">Today's Sales Overview</h2>
+                <p style="color: var(--text-muted); font-size: 14px; margin-top: 2px;">MIT Mumbai Canteen Real-Time Revenue Data</p>
+            </div>
+            <!-- Feature 4: Download CSV Sales Log Button -->
+            <a href="/staff/analytics/export-csv" class="nav-cart-btn" style="text-decoration: none; padding: 12px 20px;">📥 Export Daily Sales CSV</a>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px;">
+            <div style="background: var(--card-bg); border: 1px solid var(--card-border); padding: 24px; border-radius: var(--radius-xl); text-align: center;">
+                <div style="font-size: 36px; font-weight: 900; color: var(--brand-primary);">₹{{ "%.2f"|format(stats.total_revenue) }}</div>
+                <div style="color: var(--text-muted); font-size: 14px; font-weight: 700;">Today's Total Revenue</div>
+            </div>
+            <div style="background: var(--card-bg); border: 1px solid var(--card-border); padding: 24px; border-radius: var(--radius-xl); text-align: center;">
+                <div style="font-size: 36px; font-weight: 900; color: #0284c7;">{{ stats.total_orders }}</div>
+                <div style="color: var(--text-muted); font-size: 14px; font-weight: 700;">Total Orders Placed</div>
+            </div>
+        </div>
+
+        <div style="background: var(--card-bg); padding: 28px; border-radius: var(--radius-xl); border: 1px solid var(--card-border);">
+            <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 16px;">🔥 Top Selling Items Today</h3>
+            {% for item in top_items %}
+                <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--card-border);">
+                    <span><strong>{{ item.name }}</strong></span>
+                    <span style="font-weight: 800; color: var(--brand-primary);">{{ item.total_qty }} portions sold</span>
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted);">No sales recorded today yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -3,47 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="refresh" content="5">
-    <title>Staff Dashboard - CanteenFlow</title>
-    <style>
-        body { font-family: sans-serif; background: #f4f6f9; padding: 20px; }
-        header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 8px; margin-bottom: 20px; }
-        .board { display: flex; gap: 20px; }
-        .col { flex: 1; background: #e9ecef; padding: 15px; border-radius: 8px; min-height: 400px; }
-        .card { background: white; padding: 15px; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        button { background: #28a745; color: white; border: none; padding: 8px; width: 100%; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .flash { background: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border-radius: 4px; }
-    </style>
+    <title>Kitchen Board - MIT Mumbai Canteen</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </head>
 <body>
     <header>
-        <h2>Kitchen Order Board</h2>
-        <div>Logged in as Staff | <a href="/logout">Logout</a></div>
+        <a href="/staff/dashboard" class="brand">⚡ MIT Mumbai Canteen Desk</a>
+        <nav>
+            <a href="/staff/dashboard" class="active">Kitchen Board</a>
+            <a href="/staff/analytics">Sales Analytics</a>
+            <a href="/staff/menu">Stock Control</a>
+            <button class="pill-btn" id="theme-btn" onclick="toggleDarkMode()" style="margin-left: 10px;">🌙 Dark</button>
+            <a href="/logout" style="color: #ef4444;">Logout</a>
+        </nav>
     </header>
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-                <div class="flash">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div>
+                <span style="font-size: 12px; font-weight: 800; color: var(--brand-primary); letter-spacing: 1px;">MIT MUMBAI CANTEEN DESK</span>
+                <h2 style="font-size: 26px; font-weight: 900; margin-top: 2px;">Live Kitchen Queue Board</h2>
+            </div>
+            <a href="/queue" target="_blank" class="pill-btn" style="text-decoration: none; background: #0284c7; color: white;">Open Counter TV Display 📺</a>
+        </div>
 
-    <div class="board">
-        <div class="col">
-            <h3>Active Kitchen Orders</h3>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="background: #d1fae5; color: #065f46; padding: 12px 20px; border-radius: 12px; margin-bottom: 24px; font-weight: 700;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
             {% for order in orders %}
-                <div class="card">
-                    <h4>Token #{{ order.token_number }} ({{ order.full_name }})</h4>
-                    <p>Status: <strong>{{ order.status }}</strong></p>
-                    <p>Total: ₹{{ "%.2f"|format(order.total_amount) }}</p>
+                <div style="background: var(--card-bg); border: 2px solid var(--brand-primary); border-radius: var(--radius-xl); padding: 24px; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="font-size: 32px; font-weight: 900; color: var(--brand-primary);">#{{ order.token_number }}</span>
+                        <span class="rating-tag" style="background: #0284c7; font-size: 12px;">{{ order.status }}</span>
+                    </div>
+
+                    <div style="font-weight: 700; margin-bottom: 6px;">Customer: {{ order.full_name }}</div>
+                    <div style="font-size: 18px; font-weight: 900; margin-bottom: 16px;">Total: ₹{{ "%.2f"|format(order.total_amount) }}</div>
+
                     <form action="/staff/order/{{ order.order_id }}/advance" method="POST">
-                        <button type="submit">Advance Order Status</button>
+                        <button type="submit" class="btn-add-overlay" style="position: static; transform: none; width: 100%; padding: 12px; background: var(--brand-primary); color: white; border: none; font-size: 14px; border-radius: 10px;">
+                            Advance Status →
+                        </button>
                     </form>
                 </div>
             {% else %}
-                <p>No active kitchen orders.</p>
+                <div style="grid-column: 1 / -1; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-xl); padding: 40px; text-align: center;">
+                    <p style="color: var(--text-muted); font-size: 18px; font-weight: 700;">All kitchen orders cleared!</p>
+                </div>
             {% endfor %}
         </div>
+
+        <footer style="margin-top: 60px; padding: 24px 0; border-top: 1px solid var(--card-border); text-align: center; color: var(--text-muted); font-size: 13px; font-weight: 600;">
+            MIT Mumbai Canteen Operations Panel • Built by <strong>Team CodeBite</strong>
+        </footer>
     </div>
 </body>
 </html>

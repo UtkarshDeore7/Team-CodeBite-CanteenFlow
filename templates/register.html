@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - CanteenFlow</title>
+    <title>Register - CanteenFlow</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </head>
@@ -12,14 +12,14 @@
         <a href="/login" class="brand">⚡ CanteenFlow</a>
         <nav>
             <button class="pill-btn" id="theme-btn" onclick="toggleDarkMode()">🌙 Dark</button>
-            <a href="/register" class="nav-cart-btn">Register →</a>
+            <a href="/login" style="font-weight: 800;">Login</a>
         </nav>
     </header>
 
-    <div class="container" style="max-width: 440px; margin-top: 50px;">
+    <div class="container" style="max-width: 460px; margin-top: 40px;">
         <div class="auth-card" style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-xl); padding: 32px; box-shadow: var(--shadow-sm); text-align: center;">
-            <div style="font-size: 11px; font-weight: 800; color: var(--brand-primary); letter-spacing: 1px; text-transform: uppercase;">CAMPUS PRE-ORDER PORTAL</div>
-            <h2 style="font-size: 26px; font-weight: 900; margin: 4px 0 20px 0;">Welcome Back</h2>
+            <div style="font-size: 11px; font-weight: 800; color: var(--brand-primary); letter-spacing: 1px; text-transform: uppercase;">CREATE ACCOUNT</div>
+            <h2 style="font-size: 26px; font-weight: 900; margin: 4px 0 20px 0;">Join CanteenFlow</h2>
 
             {% with messages = get_flashed_messages() %}
                 {% if messages %}
@@ -31,9 +31,13 @@
                 {% endif %}
             {% endwith %}
 
-            <form action="/login" method="POST">
+            <form action="/register" method="POST">
                 <div class="form-group">
-                    <label>Email Address</label>
+                    <label>Full Name</label>
+                    <input type="text" name="full_name" class="form-control" placeholder="Utkarsh Sharma" required>
+                </div>
+                <div class="form-group">
+                    <label>College Email</label>
                     <input type="email" name="email" class="form-control" placeholder="student@mitmumbai.edu" required>
                 </div>
                 <div class="form-group">
@@ -41,12 +45,12 @@
                     <input type="password" name="password" class="form-control" placeholder="••••••••" required>
                 </div>
                 <button type="submit" class="btn-action" style="width: 100%; padding: 14px; background: var(--brand-gradient); color: white; font-size: 15px; font-weight: 900; border-radius: 12px; margin-top: 10px; box-shadow: 0 4px 14px rgba(255,82,0,0.3);">
-                    Sign In 🔓
+                    Create Account 🚀
                 </button>
             </form>
 
             <div style="margin-top: 24px; font-size: 13px; color: var(--text-muted); font-weight: 700;">
-                Don't have an account? <a href="/register" style="color: var(--brand-primary); text-decoration: none;">Register Here</a>
+                Already registered? <a href="/login" style="color: var(--brand-primary); text-decoration: none;">Sign In Here</a>
             </div>
         </div>
     </div>

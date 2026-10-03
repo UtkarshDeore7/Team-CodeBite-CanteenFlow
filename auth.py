@@ -1,7 +1,7 @@
-﻿import functools
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, g
-from werkzeug.security import generate_password_hash, check_password_hash
+﻿from flask import Blueprint, render_template, request, redirect, url_for, flash, session, g
+from werkzeug.security import check_password_hash, generate_password_hash
 from db import get_db
+import functools
 
 bp = Blueprint('auth', __name__)
 
@@ -16,9 +16,12 @@ def login_required(view):
 def staff_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
-        if g.user is None or g.user['role'] not in ('STAFF', 'ADMIN'):
-            flash('Staff access required.')
+        if g.user is None:
+            flash('Please log in first.')
             return redirect(url_for('auth.login'))
+        if g.user.get('role') != 'STAFF':
+            flash('Access restricted to canteen staff.')
+            return redirect(url_for('orders.menu'))
         return view(**kwargs)
     return wrapped_view
 
@@ -36,48 +39,65 @@ def load_logged_in_user():
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
     if request.method == 'POST':
-        full_name = request.form.get('full_name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        phone = request.form.get('phone', '')
-
+        full_name = request.form['full_name']
+        email = request.form['email']
+        password = request.form['password']
+        role = request.form.get('role', 'STUDENT')
         db = get_db()
-        try:
-            with db.cursor() as cur:
-                cur.execute(
-                    "INSERT INTO users (full_name, email, password_hash, role, phone) VALUES (%s, %s, %s, 'STUDENT', %s)",
-                    (full_name, email, generate_password_hash(password), phone)
-                )
-            flash('Registration successful! Please log in.')
-            return redirect(url_for('auth.login'))
-        except Exception:
-            flash('Registration failed. Email might already exist.')
+        error = None
 
-    return render_template('login.html')
+        if not full_name or not email or not password:
+            error = 'All fields are required.'
+
+        if error is None:
+            try:
+                hashed_pw = generate_password_hash(password)
+                with db.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO users (full_name, email, password_hash, role) VALUES (%s, %s, %s, %s)",
+                        (full_name, email, hashed_pw, role)
+                    )
+                flash('Registration successful! Please log in.')
+                return redirect(url_for('auth.login'))
+            except Exception:
+                error = 'Email already registered.'
+
+        flash(error)
+
+    return render_template('register.html')
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-
+        email = request.form['email']
+        password = request.form['password']
         db = get_db()
+        error = None
+
         with db.cursor() as cur:
             cur.execute("SELECT * FROM users WHERE email = %s", (email,))
             user = cur.fetchone()
 
-        if user and check_password_hash(user['password_hash'], password):
+        if user is None or not check_password_hash(user['password_hash'], password):
+            error = 'Invalid email or password.'
+
+        if error is None:
             session.clear()
             session['user_id'] = user['user_id']
-            if user['role'] in ('STAFF', 'ADMIN'):
+            session['user_role'] = user['role']
+            if user['role'] == 'STAFF':
+                flash('Welcome to Staff Operations Dashboard!')
                 return redirect(url_for('staff.dashboard'))
-            return redirect(url_for('orders.menu'))
+            else:
+                flash(f'Welcome back, {user["full_name"]}!')
+                return redirect(url_for('orders.menu'))
 
-        flash('Invalid email or password.')
+        flash(error)
 
     return render_template('login.html')
 
 @bp.route('/logout')
 def logout():
     session.clear()
+    flash('Logged out successfully.')
     return redirect(url_for('auth.login'))

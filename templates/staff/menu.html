@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Control - Staff Operations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</head>
+<body>
+    <header>
+        <a href="/staff/dashboard" class="brand">⚡ Staff Operations</a>
+        <nav>
+            <a href="/staff/dashboard">Kitchen Board</a>
+            <a href="/staff/analytics">Sales Analytics</a>
+            <a href="/staff/menu" class="active">Stock Control</a>
+            <button class="pill-btn" id="theme-btn" onclick="toggleDarkMode()" style="margin-left: 10px;">🌙 Dark</button>
+            <a href="/logout" style="color: #ef4444;">Logout</a>
+        </nav>
+    </header>
+
+    <div class="container" style="max-width: 900px;">
+        <h2 style="font-size: 26px; font-weight: 900; margin-bottom: 24px;">Item Availability Control</h2>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="background: #e0f2fe; color: #0369a1; padding: 12px 20px; border-radius: 12px; margin-bottom: 24px; font-weight: 700;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-xl); padding: 24px; box-shadow: var(--shadow-sm);">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align: left; border-bottom: 2px solid var(--card-border);">
+                        <th style="padding: 12px;">ITEM NAME</th>
+                        <th style="padding: 12px;">PRICE</th>
+                        <th style="padding: 12px;">STATUS</th>
+                        <th style="padding: 12px; text-align: right;">ACTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr style="border-bottom: 1px solid var(--card-border);">
+                            <td style="padding: 16px 12px; font-weight: 800;">{{ item.name }}</td>
+                            <td style="padding: 16px 12px; font-weight: 700;">₹{{ "%.2f"|format(item.price) }}</td>
+                            <td style="padding: 16px 12px;">
+                                {% if item.is_available %}
+                                    <span style="background: #dcfce7; color: #15803d; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 20px;">In Stock</span>
+                                {% else %}
+                                    <span style="background: #fef2f2; color: #b91c1c; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 20px;">Sold Out</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 16px 12px; text-align: right;">
+                                <form action="/staff/menu/toggle" method="POST" style="display: inline;">
+                                    <input type="hidden" name="item_id" value="{{ item.item_id }}">
+                                    <button type="submit" class="pill-btn" style="background: {{ '#ef4444' if item.is_available else '#10b981' }}; color: white; border: none;">
+                                        {{ 'Mark Sold Out' if item.is_available else 'Mark In Stock' }}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

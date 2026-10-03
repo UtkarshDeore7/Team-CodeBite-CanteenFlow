@@ -2,32 +2,275 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Orders - CanteenFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <style>
-        body { font-family: sans-serif; background: #f8f9fa; padding: 20px; }
-        .container { max-width: 700px; margin: 0 auto; }
-        .order-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
-        a { color: #007bff; text-decoration: none; }
+        .order-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .order-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(255, 82, 0, 0.35);
+        }
+
+        .order-card.live-active {
+            border: 1.5px solid var(--brand-primary);
+            background: linear-gradient(180deg, rgba(255, 82, 0, 0.03) 0%, var(--card-bg) 100%);
+        }
+
+        .pulse-dot-green {
+            width: 9px;
+            height: 9px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulseGlowGreen 1.5s infinite;
+        }
+
+        .pulse-dot-orange {
+            width: 9px;
+            height: 9px;
+            background-color: #f59e0b;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulseGlowOrange 1.5s infinite;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+
+        .status-ready { background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-preparing { background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-placed { background: rgba(2, 132, 199, 0.12); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.3); }
+        .status-collected { background: rgba(100, 116, 139, 0.1); color: var(--text-muted); border: 1px solid var(--card-border); }
+        .status-cancelled { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+        .stepper-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 16px 0 20px 0;
+            padding: 12px 18px;
+            background: rgba(15, 23, 42, 0.03);
+            border-radius: 12px;
+            border: 1px dashed var(--card-border);
+        }
+
+        body.dark-mode .stepper-bar { background: rgba(255, 255, 255, 0.03); }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11.5px;
+            font-weight: 800;
+            color: var(--text-muted);
+        }
+
+        .step-item.active { color: var(--brand-primary); }
+        .step-item.completed { color: #10b981; }
+
+        .item-chip {
+            background: rgba(15, 23, 42, 0.04);
+            border: 1px solid var(--card-border);
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.2s ease;
+        }
+
+        .item-chip:hover { transform: translateY(-1px); }
+
+        body.dark-mode .item-chip { background: rgba(255, 255, 255, 0.05); }
+
+        .btn-action {
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 12.5px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-action:hover { transform: translateY(-2px); }
+        .btn-ticket { background: #0284c7; color: white; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25); }
+        .btn-whatsapp { background: #25D366; color: white; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25); }
+        .btn-reorder { background: var(--brand-primary); color: white; box-shadow: 0 4px 14px rgba(255, 82, 0, 0.28); }
+        .btn-cancel { background: #ef4444; color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="/menu">← Back to Menu</a>
-        <h2>My Past Orders</h2>
-        {% for o in orders %}
-            <div class="order-card">
-                <div>
-                    <strong>Token #{{ o.token_number }}</strong> - {{ o.placed_at }}<br>
-                    Status: <em>{{ o.status }}</em>
-                </div>
-                <div>
-                    <strong>₹{{ "%.2f"|format(o.total_amount) }}</strong> | 
-                    <a href="/order/{{ o.order_id }}">View Ticket</a>
-                </div>
+    <header>
+        <a href="/menu" class="brand">⚡ CanteenFlow</a>
+        <nav>
+            <a href="/menu">Menu</a>
+            <a href="/orders" class="active">My Orders</a>
+            <a href="/cart" class="nav-cart-btn">Cart 🛒</a>
+            <button class="pill-btn" id="theme-btn" onclick="toggleDarkMode()" style="margin-left: 10px; padding: 6px 14px;">🌙 Dark</button>
+            <a href="/logout" style="color: #ef4444;">Logout</a>
+        </nav>
+    </header>
+
+    <div class="container" style="max-width: 820px;">
+        
+        <div style="background: var(--brand-gradient); border-radius: 20px; padding: 24px; color: white; margin-bottom: 28px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 24px rgba(255,82,0,0.22); position: relative; overflow: hidden;">
+            <div style="position: relative; z-index: 2;">
+                <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">CANTEENFLOW EXPRESS</span>
+                <h2 style="font-size: 26px; font-weight: 900; margin-top: 2px;">Your Order Timeline</h2>
+                <p style="font-size: 13px; opacity: 0.95; margin-top: 4px;">Track live prep status or reorder your favorite meals in 1-click.</p>
             </div>
+            <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); padding: 12px 20px; border-radius: 14px; text-align: center; border: 1px solid rgba(255,255,255,0.3); position: relative; z-index: 2;">
+                <div style="font-size: 22px; font-weight: 900;">{{ orders|length }}</div>
+                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase;">Total Orders</div>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="background: #e0f2fe; color: #0369a1; padding: 12px 20px; border-radius: 14px; margin-bottom: 24px; font-weight: 700; border: 1px solid #bae6fd;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if orders %}
+            {% for order in orders %}
+                <div class="order-card {{ 'live-active' if order.status in ['PLACED', 'ACCEPTED', 'PREPARING', 'READY'] else '' }}">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 14px;">
+                        <div>
+                            <span style="font-size: 24px; font-weight: 900; color: var(--brand-primary); letter-spacing: -0.5px;">Token #{{ order.token_number }}</span>
+                            <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; margin-left: 8px;">Order #{{ order.order_id }}</span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 12.5px; color: var(--text-muted); font-weight: 700;">
+                                🕒 {{ order.order_date }} • {{ order.placed_at.strftime('%I:%M %p') if order.placed_at else '' }}
+                            </span>
+
+                            {% if order.status == 'READY' %}
+                                <span class="status-badge status-ready"><span class="pulse-dot-green"></span> 🔔 READY AT COUNTER</span>
+                            {% elif order.status in ['PREPARING', 'ACCEPTED'] %}
+                                <span class="status-badge status-preparing"><span class="pulse-dot-orange"></span> ⏳ KITCHEN PREPARING</span>
+                            {% elif order.status == 'COLLECTED' %}
+                                <span class="status-badge status-collected">✓ COLLECTED</span>
+                            {% elif order.status == 'CANCELLED' %}
+                                <span class="status-badge status-cancelled">❌ CANCELLED</span>
+                            {% else %}
+                                <span class="status-badge status-placed">📝 ORDER PLACED</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if order.status in ['PLACED', 'ACCEPTED', 'PREPARING', 'READY'] %}
+                        <div class="stepper-bar">
+                            <div class="step-item {{ 'completed' if order.status in ['ACCEPTED', 'PREPARING', 'READY'] else 'active' }}">
+                                <span>1. Placed ✓</span>
+                            </div>
+                            <div style="color: var(--card-border);">→</div>
+                            <div class="step-item {{ 'completed' if order.status == 'READY' else ('active' if order.status in ['ACCEPTED', 'PREPARING'] else '') }}">
+                                <span>2. Kitchen Preparing 🍳</span>
+                            </div>
+                            <div style="color: var(--card-border);">→</div>
+                            <div class="step-item {{ 'active' if order.status == 'READY' else '' }}">
+                                <span>3. Ready for Pickup 🔔</span>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div style="margin: 16px 0;">
+                        <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;">DISHES ORDERED</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            {% set item_list = order.items_summary.split(', ') %}
+                            {% for item_str in item_list %}
+                                <span class="item-chip">
+                                    <span style="color: var(--veg-color); font-size: 10px;">🟢</span> {{ item_str }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--card-border); padding-top: 14px; margin-top: 8px;">
+                        <div>
+                            <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; display: block;">PAYMENT MODE: PAY AT COUNTER</span>
+                            <span style="font-size: 22px; font-weight: 900; color: var(--brand-primary);">₹{{ "%.2f"|format(order.total_amount) }}</span>
+                        </div>
+
+                        <div style="display: flex; gap: 8px;">
+                            <a href="/order/{{ order.order_id }}" class="btn-action btn-ticket">
+                                Ticket 🎟️
+                            </a>
+
+                            {% if order.status != 'CANCELLED' %}
+                                <a href="https://api.whatsapp.com/send?text=Hey!%20My%20CanteenFlow%20Token%20is%20%23{{ order.token_number }}.%20Items%3A%20{{ order.items_summary }}.%20Total%3A%20%E2%82%B9{{ order.total_amount }}." target="_blank" class="btn-action btn-whatsapp">
+                                    Share 📲
+                                </a>
+                            {% endif %}
+
+                            {% if order.status == 'PLACED' %}
+                                <form action="/order/{{ order.order_id }}/cancel" method="POST" style="display: inline;" onsubmit="return confirm('Cancel this order?');">
+                                    <button type="submit" class="btn-action btn-cancel">
+                                        Cancel ❌
+                                    </button>
+                                </form>
+                            {% else %}
+                                <form action="/order/{{ order.order_id }}/reorder" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn-action btn-reorder">
+                                        Reorder 🔄
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+            {% endfor %}
         {% else %}
-            <p>No orders placed yet.</p>
-        {% endfor %}
+            <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 48px 24px; text-align: center; box-shadow: var(--shadow-sm);">
+                <div style="font-size: 54px; margin-bottom: 12px;">🍱</div>
+                <h3 style="font-size: 20px; font-weight: 900; margin-bottom: 6px;">No Orders Placed Yet</h3>
+                <p style="color: var(--text-muted); font-size: 13.5px; font-weight: 600; margin-bottom: 20px;">Explore our 100% pure veg canteen menu and skip the physical queue!</p>
+                <a href="/menu" class="btn-action btn-reorder" style="padding: 12px 28px; font-size: 14px;">
+                    Explore Canteen Menu 🍛 →
+                </a>
+            </div>
+        {% endif %}
+
+        <footer style="margin-top: 40px; padding: 20px 0; text-align: center; color: var(--text-muted); font-size: 12.5px; font-weight: 600;">
+            🌱 <strong>CanteenFlow (100% Pure Veg)</strong> • Powered by Team CodeBite
+        </footer>
     </div>
 </body>
 </html>

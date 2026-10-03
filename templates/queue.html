@@ -2,28 +2,202 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="5">
-    <title>Canteen Counter Display</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Counter TV Display - CanteenFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        body { font-family: sans-serif; background: #111; color: white; padding: 40px; text-align: center; }
-        h1 { font-size: 40px; margin-bottom: 30px; }
-        .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
-        .token-box { background: #222; border: 2px solid #28a745; padding: 20px; border-radius: 12px; min-width: 150px; }
-        .number { font-size: 50px; font-weight: bold; color: #28a745; }
-        .status { color: #aaa; margin-top: 5px; font-size: 14px; }
+        body {
+            background-color: #090d16 !important;
+            color: #ffffff !important;
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .tv-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #131b2e;
+            padding: 16px 28px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .audio-banner {
+            background: linear-gradient(135deg, #ff5200, #e23744);
+            color: white;
+            text-align: center;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 800;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(255, 82, 0, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.01); }
+            100% { transform: scale(1); }
+        }
+
+        .tv-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            height: calc(100vh - 160px);
+        }
+
+        .tv-column {
+            background: #131b2e;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .col-title {
+            font-size: 22px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tokens-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        .token-box {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 16px;
+            padding: 20px 10px;
+            text-align: center;
+            font-size: 38px;
+            font-weight: 900;
+            color: #f8fafc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .token-box.ready {
+            background: linear-gradient(135deg, #059669, #10b981);
+            border-color: #34d399;
+            color: #ffffff;
+            animation: popIn 0.4s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
-    <h1>Canteen Live Queue</h1>
-    <div class="grid">
-        {% for item in queue_items %}
-            <div class="token-box">
-                <div class="number">#{{ item.token_number }}</div>
-                <div class="status">{{ item.status }}</div>
-            </div>
-        {% else %}
-            <h2>No active orders in queue</h2>
-        {% endfor %}
+
+    <div id="audio-notice" class="audio-banner" onclick="enableAudio()">
+        🔊 CLICK HERE TO START VOICE ANNOUNCER COUNTER DISPLAY
     </div>
+
+    <div class="tv-header">
+        <div style="font-size: 26px; font-weight: 900; color: #ff5200;">⚡ CANTEENFLOW</div>
+        <div style="font-size: 18px; font-weight: 700; color: #94a3b8;" id="clock-display">00:00:00 PM</div>
+    </div>
+
+    <div class="tv-grid">
+        <div class="tv-column">
+            <div class="col-title" style="color: #fbbf24;">
+                <span>⏳</span> PREPARING IN KITCHEN
+            </div>
+            <div class="tokens-container" id="prep-tokens">
+                <div style="color: #64748b; font-size: 16px; font-weight: 600;">No active orders preparing</div>
+            </div>
+        </div>
+
+        <div class="tv-column">
+            <div class="col-title" style="color: #34d399;">
+                <span>🔔</span> READY FOR PICKUP
+            </div>
+            <div class="tokens-container" id="ready-tokens">
+                <div style="color: #64748b; font-size: 16px; font-weight: 600;">No orders ready</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let announcedSet = new Set();
+        let voiceEnabled = false;
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock-display').innerText = now.toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function enableAudio() {
+            voiceEnabled = true;
+            document.getElementById('audio-notice').style.display = 'none';
+            speakText("Voice announcer system activated for CanteenFlow.");
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.rate = 0.9;
+                utter.pitch = 1.0;
+                window.speechSynthesis.speak(utter);
+            }
+        }
+
+        function pollQueue() {
+            fetch('/staff/queue_data.json?t=' + Date.now())
+                .then(res => res.json())
+                .then(data => {
+                    const prepContainer = document.getElementById('prep-tokens');
+                    if (data.preparing.length === 0) {
+                        prepContainer.innerHTML = '<div style="color: #64748b; font-size: 16px; font-weight: 600;">No active orders preparing</div>';
+                    } else {
+                        prepContainer.innerHTML = data.preparing.map(t => `<div class="token-box">#${t}</div>`).join('');
+                    }
+
+                    const readyContainer = document.getElementById('ready-tokens');
+                    if (data.ready.length === 0) {
+                        readyContainer.innerHTML = '<div style="color: #64748b; font-size: 16px; font-weight: 600;">No orders ready</div>';
+                    } else {
+                        readyContainer.innerHTML = data.ready.map(t => `<div class="token-box ready">#${t}</div>`).join('');
+                    }
+
+                    data.ready.forEach(tokenNum => {
+                        if (!announcedSet.has(tokenNum)) {
+                            announcedSet.add(tokenNum);
+                            if (voiceEnabled) {
+                                speakText(`Token number ${tokenNum} is ready at the counter!`);
+                            }
+                        }
+                    });
+                })
+                .catch(err => console.log('Polling queue error:', err));
+        }
+
+        setInterval(pollQueue, 3000);
+        pollQueue();
+    </script>
 </body>
 </html>

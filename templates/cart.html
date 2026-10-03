@@ -2,39 +2,88 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Cart - CanteenFlow</title>
-    <style>
-        body { font-family: sans-serif; background: #f8f9fa; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }
-        .total { font-size: 18px; font-weight: bold; text-align: right; margin-bottom: 20px; }
-        button { background: #28a745; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; border-radius: 4px; cursor: pointer; }
-        a { color: #007bff; text-decoration: none; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </head>
 <body>
-    <div class="container">
-        <a href="/menu">← Back to Menu</a>
-        <h2>Your Cart</h2>
-        {% if items %}
-            <table>
-                <tr><th>Item</th><th>Qty</th><th>Price</th></tr>
+    <header>
+        <a href="/menu" class="brand">⚡ CanteenFlow</a>
+        <nav>
+            <a href="/menu">Menu</a>
+            <a href="/orders">My Orders</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+
+    <div class="container" style="max-width: 680px;">
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); padding: 28px; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-size: 22px; font-weight: 900;">Review Your Cart</h2>
+                <div style="background: rgba(255, 82, 0, 0.1); color: var(--brand-primary); padding: 5px 12px; border-radius: 20px; font-size: 12.5px; font-weight: 800;">
+                    🪙 {{ food_coins }} Canteen Food Coins
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div style="background: #e0f2fe; color: #0369a1; padding: 10px; margin-bottom: 15px; border-radius: 8px; font-weight: 600;">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if items %}
                 {% for row in items %}
-                    <tr>
-                        <td>{{ row.item.name }}</td>
-                        <td>{{ row.qty }}</td>
-                        <td>₹{{ "%.2f"|format(row.line_total) }}</td>
-                    </tr>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--card-border);">
+                        <div><strong>{{ row.item.name }}</strong> x {{ row.qty }}</div>
+                        <div style="font-weight: 800;">₹{{ "%.2f"|format(row.line_total) }}</div>
+                    </div>
                 {% endfor %}
-            </table>
-            <div class="total">Total: ₹{{ "%.2f"|format(total) }}</div>
-            <form action="/cart" method="POST">
-                <button type="submit">Place Order</button>
-            </form>
-        {% else %}
-            <p>Your cart is empty. <a href="/menu">Browse Menu</a></p>
-        {% endif %}
+
+                <br>
+                <form action="/cart" method="POST" style="display: flex; gap: 10px; margin-bottom: 12px;">
+                    <input type="text" name="promo_code" placeholder="Promo code (CODEBITE10)" value="{{ promo_code }}" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--card-bg); color: var(--text-primary);">
+                    <button type="submit" name="apply_promo" style="padding: 10px 18px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer;">Apply</button>
+                </form>
+
+                {% if food_coins > 0 %}
+                    <form action="/cart" method="POST" style="margin-bottom: 20px;">
+                        <button type="submit" name="toggle_coins" style="background: {{ '#10b981' if use_coins else 'none' }}; color: {{ 'white' if use_coins else 'var(--brand-primary)' }}; border: 1.5px solid #10b981; padding: 8px 16px; border-radius: 8px; font-weight: 800; cursor: pointer; width: 100%;">
+                            {{ '✓ Redeeming Food Coins (-₹' ~ coin_discount ~ ')' if use_coins else '🪙 Redeem ' ~ food_coins ~ ' Food Coins for Discount' }}
+                        </button>
+                    </form>
+                {% endif %}
+
+                <div style="margin-bottom: 20px; background: rgba(2, 132, 199, 0.05); padding: 14px; border-radius: 12px; border: 1px solid rgba(2, 132, 199, 0.2);">
+                    <label style="display: block; font-size: 12px; font-weight: 800; color: #0284c7; margin-bottom: 6px;">⏰ SELECT PICKUP RECESS SLOT</label>
+                    <select name="time_slot" form="checkout-form" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--card-bg); color: var(--text-primary); font-weight: 700; outline: none;">
+                        <option value="Express Immediate">⚡ Express Immediate (~5 mins)</option>
+                        <option value="11:15 AM Lecture Break">🕛 11:15 AM Lecture Recess Break</option>
+                        <option value="01:30 PM Lunch Break">🕐 01:30 PM Lunch Break</option>
+                        <option value="03:45 PM Evening Break">🕓 03:45 PM Evening Tea Break</option>
+                    </select>
+                </div>
+
+                <div style="text-align: right; margin-bottom: 24px;">
+                    <div style="color: var(--text-muted); font-weight: 600;">Subtotal: ₹{{ "%.2f"|format(subtotal) }}</div>
+                    {% if discount > 0 %}
+                        <div style="color: #10b981; font-weight: 800;">Total Discount: -₹{{ "%.2f"|format(discount) }}</div>
+                    {% endif %}
+                    <div style="font-size: 24px; font-weight: 900; color: var(--brand-primary); margin-top: 4px;">Total Amount: ₹{{ "%.2f"|format(total) }}</div>
+                    <div style="font-size: 12px; color: var(--text-muted); font-weight: 700; margin-top: 2px;">💵 Payment Mode: Pay at Canteen Counter</div>
+                </div>
+
+                <form id="checkout-form" action="/cart" method="POST">
+                    <button type="submit" style="width: 100%; padding: 14px; background: var(--brand-primary); color: white; border: none; font-size: 15px; font-weight: 900; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(255,82,0,0.3);">
+                        Place Order (Pay at Counter) 🎟️ →
+                    </button>
+                </form>
+            {% else %}
+                <p style="color: var(--text-muted); font-weight: 700;">Your cart is empty. <a href="/menu" style="color: var(--brand-primary);">Browse Canteen Menu</a></p>
+            {% endif %}
+        </div>
     </div>
 </body>
 </html>

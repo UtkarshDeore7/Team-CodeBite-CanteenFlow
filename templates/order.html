@@ -2,30 +2,93 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Order #{{ order.token_number }} - CanteenFlow</title>
-    <style>
-        body { font-family: sans-serif; background: #f8f9fa; padding: 20px; text-align: center; }
-        .ticket { background: white; max-width: 400px; margin: 40px auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .token { font-size: 48px; font-weight: bold; color: #28a745; margin: 10px 0; }
-        .status { font-weight: bold; padding: 6px 12px; background: #e2e3e5; display: inline-block; border-radius: 20px; }
-        ul { text-align: left; margin-top: 20px; padding: 0; list-style: none; }
-        li { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
-        a { color: #007bff; text-decoration: none; display: inline-block; margin-top: 20px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Ticket #{{ order.token_number }} - CanteenFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </head>
 <body>
-    <div class="ticket">
-        <div>Token Number</div>
-        <div class="token">#{{ order.token_number }}</div>
-        <div class="status">Status: {{ order.status }}</div>
-        
-        <ul>
-            {% for item in items %}
-                <li><span>{{ item.quantity }}x {{ item.name }}</span> <span>₹{{ "%.2f"|format(item.unit_price) }}</span></li>
-            {% endfor %}
-        </ul>
-        <h3>Total: ₹{{ "%.2f"|format(order.total_amount) }}</h3>
-        <a href="/orders">View All Orders</a> | <a href="/menu">Back to Menu</a>
+    <header>
+        <a href="/menu" class="brand">⚡ CanteenFlow</a>
+        <nav>
+            <a href="/menu">Menu</a>
+            <a href="/orders">My Orders</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div style="background: var(--card-bg); max-width: 480px; margin: 24px auto; padding: 28px; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--card-border); text-align: center;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">CanteenFlow Express Token</div>
+            <div style="font-size: 64px; font-weight: 900; color: var(--brand-primary); line-height: 1; margin: 6px 0;">#{{ order.token_number }}</div>
+
+            {% if order.status != 'CANCELLED' %}
+                <div style="background: rgba(255,82,0,0.08); color: var(--brand-primary); padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 800; margin-bottom: 18px;">
+                    ⏱ Estimated Wait: ~{{ estimated_wait }} Mins ({{ ahead_count }} orders ahead)
+                </div>
+            {% else %}
+                <div style="background: #fef2f2; color: #dc2626; padding: 8px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 800; margin-bottom: 18px; border: 1px solid #fecaca;">
+                    ❌ THIS ORDER IS CANCELLED
+                </div>
+            {% endif %}
+
+            <ul style="text-align: left; border-top: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border); padding: 14px 0; margin-bottom: 18px; list-style: none;">
+                {% for item in items %}
+                    <li style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px;">
+                        <span><strong>{{ item.quantity }}x</strong> {{ item.name }}</span>
+                        <span style="font-weight: 800;">₹{{ "%.2f"|format(item.unit_price) }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <span style="font-size: 13px; font-weight: 800; color: var(--text-muted);">💵 Mode: Pay at Counter</span>
+                <span style="font-size: 22px; font-weight: 900; color: var(--brand-primary);">₹{{ "%.2f"|format(order.total_amount) }}</span>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <button onclick="printThermalReceipt()" style="flex: 1; padding: 10px; background: #0284c7; color: white; border: none; font-weight: 800; border-radius: 8px; cursor: pointer;">
+                    Print Receipt 🧾
+                </button>
+                <a href="https://api.whatsapp.com/send?text=Hey!%20My%20CanteenFlow%20Token%20is%20%23{{ order.token_number }}.%20Total%3A%20%E2%82%B9{{ order.total_amount }}." target="_blank" style="flex: 1; padding: 10px; background: #25D366; color: white; border: none; font-weight: 800; border-radius: 8px; text-decoration: none; display: inline-block;">
+                    WhatsApp Share 📲
+                </a>
+            </div>
+
+            {% if order.status == 'PLACED' %}
+                <form action="/order/{{ order.order_id }}/cancel" method="POST" style="margin-top: 8px;" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                    <button type="submit" style="width: 100%; padding: 10px; background: #ef4444; color: white; border: none; font-weight: 800; border-radius: 8px; cursor: pointer;">
+                        Cancel Order ❌
+                    </button>
+                </form>
+            {% endif %}
+
+            <a href="/orders" style="display: block; text-decoration: none; font-weight: 800; color: var(--text-muted); margin-top: 14px;">View All Past Orders</a>
+        </div>
     </div>
+
+    <!-- Hidden Printable Receipt Template -->
+    <div id="printable-receipt">
+        <center>
+            <h2>CANTEENFLOW</h2>
+            <p>Campus Express Counter<br>Payment: Pay at Counter</p>
+            <hr>
+            <h3>TOKEN NO: #{{ order.token_number }}</h3>
+            <p>Date: {{ order.order_date }}</p>
+            <hr>
+        </center>
+        {% for item in items %}
+            <div>{{ item.quantity }}x {{ item.name }} - ₹{{ "%.2f"|format(item.unit_price) }}</div>
+        {% endfor %}
+        <hr>
+        <div><strong>AMOUNT DUE: ₹{{ "%.2f"|format(order.total_amount) }}</strong></div>
+        <center>
+            <p><br>Please pay at counter upon collection.<br>Powered by Team CodeBite</p>
+        </center>
+    </div>
+
+    <script>
+        startPollingOrder({{ order.order_id }});
+    </script>
 </body>
 </html>

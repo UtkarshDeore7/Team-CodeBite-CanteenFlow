@@ -1,0 +1,4 @@
+﻿Flask
+PyMySQL
+python-dotenv
+werkzeug
